@@ -1,22 +1,23 @@
 import pygame
 from config.config import BOARD_SIZE
 
-# ── Palette ──────────────────────────────────────────────────────────────────
-BG          = (15,  15,  20)   # near-black background
-GRID        = (28,  28,  38)   # subtle grid lines
-FOOD        = (255, 80,  80)   # vivid red food
-S1_HEAD     = (80,  220, 120)  # player – bright green head
-S1_BODY     = (45,  140,  70)  # player – dark green body
-S2_HEAD     = (80,  160, 255)  # AI – bright blue head
-S2_BODY     = (40,   90, 180)  # AI – dark blue body
-TEXT_MAIN   = (230, 230, 230)
-TEXT_DIM    = (120, 120, 140)
-OVERLAY_BG  = (10,  10,  15, 210)   # semi-transparent end screen
+# Palette 
+BG          = (15,  15,  20)   
+GRID        = (28,  28,  38)   
+FOOD        = (255, 80,  80) 
+S1_HEAD     = (60, 180,  60)   
+S1_BODY     = (120, 255, 120)  
+S2_HEAD     = (80,  160, 255)  
+S2_BODY     = (40,  90, 180)   
+TEXT_MAIN   = (255, 255, 220)  
+TEXT_DIM    = (180, 200, 160)  
+OVERLAY_BG  = (10,  10,  15, 210)   
 
-CELL        = 52          # px per cell
-MARGIN      = 12          # px gap between grid cells
-SIDEBAR_W   = 220         # right panel width
-PADDING     = 24          # outer padding
+
+CELL        = 42         
+MARGIN      = 4         
+SIDEBAR_W   = 240         
+PADDING     = 30         
 
 
 def cell_rect(row, col):
@@ -33,9 +34,12 @@ def board_pixel_size():
 
 
 class Renderer:
-    def __init__(self):
+    def __init__(self, player1_name, player2_name):
         pygame.init()
         pygame.display.set_caption("Double Snake")
+
+        self.player1 = player1_name
+        self.player2 = player2_name
 
         board_px = board_pixel_size()
         self.W = board_px + SIDEBAR_W
@@ -46,11 +50,11 @@ class Renderer:
 
         # fonts
         self.font_xl  = pygame.font.SysFont("monospace", 36, bold=True)
-        self.font_lg  = pygame.font.SysFont("monospace", 22, bold=True)
-        self.font_md  = pygame.font.SysFont("monospace", 16)
-        self.font_sm  = pygame.font.SysFont("monospace", 13)
+        self.font_lg  = pygame.font.SysFont("consolas", 22, bold=True)
+        self.font_md  = pygame.font.SysFont("consolas", 18)
+        self.font_sm  = pygame.font.SysFont("consolas", 15)
 
-    # ── public API ─────────────────────────────────────────────────────────
+    # public API 
 
     def draw(self, game, scores, fps=10):
         """Render one frame. Call every game tick."""
@@ -79,7 +83,7 @@ class Renderer:
         self.screen.blit(hint, hint.get_rect(center=(board_px // 2, board_px // 2 + 20)))
 
         score_txt = self.font_md.render(
-            f"You {scores['player']}  –  AI {scores['ai']}", True, TEXT_DIM
+            f"{self.player1} {scores['player1']}  –  {self.player2} {scores['player2']}", True, TEXT_DIM
         )
         self.screen.blit(score_txt, score_txt.get_rect(center=(board_px // 2, board_px // 2 + 55)))
 
@@ -91,7 +95,7 @@ class Renderer:
     def quit(self):
         pygame.quit()
 
-    # ── private helpers ────────────────────────────────────────────────────
+    # private helpers 
 
     def _draw_grid(self):
         for r in range(BOARD_SIZE):
@@ -120,7 +124,7 @@ class Renderer:
     def _draw_eyes(self, rect, direction):
         dr, dc = direction
         cx, cy = rect.centerx, rect.centery
-        eye_r = 4
+        eye_r = 6          # povećano sa 4 na 6
 
         if direction == (-1, 0):   # UP
             e1, e2 = (cx - 9, cy - 8), (cx + 9, cy - 8)
@@ -132,12 +136,14 @@ class Renderer:
             e1, e2 = (cx + 8, cy - 9), (cx + 8, cy + 9)
 
         for pos in (e1, e2):
+            # Belo oko
             pygame.draw.circle(self.screen, (255, 255, 255), pos, eye_r)
+            # Zenica (crna)
             pygame.draw.circle(self.screen, (10, 10, 10), pos, eye_r - 2)
 
     def _draw_sidebar(self, game, scores):
         board_px = board_pixel_size()
-        x = board_px + 16
+        x = board_px + 30
         y = PADDING
 
         def label(text, color=TEXT_DIM, font=None):
@@ -152,7 +158,7 @@ class Renderer:
             y += n
 
         label("DOUBLE SNAKE", TEXT_MAIN, self.font_lg)
-        label("Player vs AI", TEXT_DIM)
+        label(f"{self.player1} vs {self.player2}", TEXT_DIM)
         gap()
 
         # divider
@@ -161,18 +167,18 @@ class Renderer:
 
         # player
         pygame.draw.rect(self.screen, S1_HEAD, pygame.Rect(x, y, 14, 14), border_radius=3)
-        self.screen.blit(self.font_md.render("  YOU", True, TEXT_MAIN), (x + 18, y - 2))
+        self.screen.blit(self.font_md.render(f"  {self.player1}", True, TEXT_MAIN), (x + 18, y - 2))
         y += 22
         label(f"  Length : {len(game.snake1.body)}")
-        label(f"  Wins   : {scores['player']}")
+        label(f"  Wins   : {scores['player1']}")
         gap()
 
         # ai
         pygame.draw.rect(self.screen, S2_HEAD, pygame.Rect(x, y, 14, 14), border_radius=3)
-        self.screen.blit(self.font_md.render("  AI", True, TEXT_MAIN), (x + 18, y - 2))
+        self.screen.blit(self.font_md.render(f"  {self.player2}", True, TEXT_MAIN), (x + 18, y - 2))
         y += 22
         label(f"  Length : {len(game.snake2.body)}")
-        label(f"  Wins   : {scores['ai']}")
+        label(f"  Wins   : {scores['player2']}")
         gap()
 
         pygame.draw.line(self.screen, GRID, (x, y), (x + SIDEBAR_W - 24, y))

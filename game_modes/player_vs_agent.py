@@ -15,8 +15,8 @@ from game.renderer import Renderer
 from agents.heuristic_agent.heuristic_agent import HeuristicAgent
 
 
-# ── constants ─────────────────────────────────────────────────────────────────
-FPS = 10   # game ticks per second – raise for harder, lower for easier
+# constants
+FPS = 5   # game ticks per second – raise for harder, lower for easier
 
 KEY_DIR = {
     # WASD
@@ -38,7 +38,7 @@ RESULT_MSG = {
 }
 
 
-# ── helpers ───────────────────────────────────────────────────────────────────
+# helpers 
 
 def make_agent(game):
     """Build a fresh HeuristicAgent bound to the current game objects."""
@@ -46,20 +46,17 @@ def make_agent(game):
 
 
 def run():
-    renderer = Renderer()
-    game     = Game()
-    agent    = make_agent(game)
-
-    scores = {"player": 0, "ai": 0}
-
-    # track the player's chosen direction between ticks
+    renderer = Renderer("You", "AI")
+    game = Game()
+    agent = make_agent(game)
+    scores = {"player1": 0, "player2": 0}
     player_dir = game.snake1.direction
-
-    running   = True
+    running = True
     game_over = False
+    end_message = ""   # čuva poruku za kraj
 
     while running:
-        # ── event handling ────────────────────────────────────────────────
+        # event handling 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -69,10 +66,13 @@ def run():
                     running = False
 
                 elif event.key == pygame.K_r:
-                    game      = Game()
-                    agent     = make_agent(game)
+                    # restart 
+                    game = Game()
+                    agent = make_agent(game)
                     player_dir = game.snake1.direction
-                    game_over  = False
+                    game_over = False
+                    end_message = ""
+                    continue   
 
                 elif event.key in KEY_DIR and not game_over:
                     player_dir = KEY_DIR[event.key]
@@ -80,28 +80,30 @@ def run():
         if not running:
             break
 
-        # ── game tick ─────────────────────────────────────────────────────
+        # game tick 
         if not game_over:
             ai_dir = agent.get_action()
             _, _, done = game.step(player_dir, ai_dir)
-
-            # re-bind agent to updated game state each tick
             agent = make_agent(game)
 
             if done:
                 game_over = True
                 state = game.get_state()
                 if state == GameState.SNAKE1_WIN:
-                    scores["player"] += 1
+                    scores["player1"] += 1
                 elif state == GameState.SNAKE2_WIN:
-                    scores["ai"] += 1
+                    scores["player2"] += 1
+                end_message = RESULT_MSG.get(state, "GAME OVER")
 
-        # ── rendering ─────────────────────────────────────────────────────
-        renderer.draw(game, scores, fps=FPS)
+                # End 
+                renderer.draw_end_screen(end_message, scores)
 
-        if game_over:
-            msg = RESULT_MSG.get(game.get_state(), "GAME OVER")
-            renderer.draw_end_screen(msg, scores)
+        # rendering 
+        if not game_over:
+            # Draw board untill it's over
+            renderer.draw(game, scores, fps=FPS)
+        else:
+            # When game over stop drawing
             renderer.tick(FPS)
 
     renderer.quit()
