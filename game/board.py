@@ -1,4 +1,5 @@
 import random
+import os
 from config.config import BOARD_SIZE
 
 
@@ -6,6 +7,18 @@ class Board:
     def __init__(self):
         self.size = BOARD_SIZE
         self.food = None
+        # available fruit types - prefer assets in assets/fruits/ if present
+        assets_dir = os.path.normpath(
+            os.path.join(os.path.dirname(__file__), '..', 'assets', 'fruits')
+        )
+        if os.path.isdir(assets_dir):
+            types = [os.path.splitext(f)[0] for f in os.listdir(assets_dir) if f.lower().endswith('.png')]
+            if types:
+                self._fruit_types = types
+            else:
+                self._fruit_types = ['apple', 'pear', 'blueberry', 'orange', 'grapes']
+        else:
+            self._fruit_types = ['apple', 'pear', 'blueberry', 'orange', 'grapes']
 
     def place_food(self, snake1_body, snake2_body):
         # occupied cells by both snakes
@@ -20,7 +33,10 @@ class Board:
         ]
 
         if free:
-            self.food = random.choice(free)
+            pos = random.choice(free)
+            fruit = random.choice(self._fruit_types)
+            # store both position and type
+            self.food = (pos, fruit)
         else:
             self.food = None  
 
@@ -46,4 +62,8 @@ class Board:
         return False
 
     def check_food(self, snake):
-        return snake.head() == self.food
+        if self.food is None:
+            return False
+        # food can be stored as (position, type)
+        pos = self.food[0] if isinstance(self.food, tuple) and len(self.food) >= 1 else self.food
+        return snake.head() == pos

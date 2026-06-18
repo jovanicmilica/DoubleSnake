@@ -1,4 +1,5 @@
 import pygame
+import os
 from config.config import BOARD_SIZE
 
 # Palette 
@@ -54,7 +55,24 @@ class Renderer:
         self.font_md  = pygame.font.SysFont("consolas", 18)
         self.font_sm  = pygame.font.SysFont("consolas", 15)
 
-    # public API 
+        # Load fruit images from assets/fruits/ (optional). Filenames will determine fruit types.
+        self.fruit_images = {}
+        assets_dir = os.path.join(os.path.dirname(__file__), '..', 'assets', 'fruits')
+        assets_dir = os.path.normpath(assets_dir)
+        if os.path.isdir(assets_dir):
+            for fname in os.listdir(assets_dir):
+                if not fname.lower().endswith('.png'):
+                    continue
+                name = os.path.splitext(fname)[0]
+                path = os.path.join(assets_dir, fname)
+                try:
+                    img = pygame.image.load(path).convert_alpha()
+                    img = pygame.transform.smoothscale(img, (CELL - 16, CELL - 16))
+                    self.fruit_images[name] = img
+                except Exception:
+                    # ignore loading errors and fall back to drawn fruit
+                    pass
+
 
     def draw(self, game, scores, fps=10):
         """Render one frame. Call every game tick."""
@@ -106,10 +124,34 @@ class Renderer:
     def _draw_food(self, food):
         if food is None:
             return
-        rect = cell_rect(*food)
-        # pulsing dot: just a circle for now
-        pygame.draw.ellipse(self.screen, FOOD, rect.inflate(-10, -10))
-        pygame.draw.ellipse(self.screen, (255, 160, 160), rect.inflate(-22, -22))
+        # food may be (position, type) or just position
+        if isinstance(food, tuple) and len(food) >= 1 and isinstance(food[0], tuple):
+            pos, ftype = food[0], (food[1] if len(food) > 1 else 'default')
+        else:
+            pos, ftype = food, 'default'
+
+        rect = cell_rect(*pos)
+
+        # simple fruit palette (can be replaced with images later)
+        FRUIT_COLORS = {
+            'apple': (220, 60,  60),
+            'banana': (255, 220, 80),
+            'cherry': (200, 30,  70),
+            'orange': (255, 140, 20),
+            'default': FOOD,
+        }
+
+        color = FRUIT_COLORS.get(ftype, FOOD)
+
+        # Try to draw an image for the fruit if available, otherwise fallback to ellipse
+        img = self.fruit_images.get(ftype)
+        if img:
+            img_rect = img.get_rect(center=rect.center)
+            self.screen.blit(img, img_rect)
+        else:
+            # draw fruit body (fallback)
+            pygame.draw.ellipse(self.screen, color, rect.inflate(-10, -10))
+            pygame.draw.ellipse(self.screen, (255, 200, 200), rect.inflate(-26, -26))
 
     def _draw_snake(self, snake, head_col, body_col):
         for i, (r, c) in enumerate(snake.body):
@@ -136,9 +178,7 @@ class Renderer:
             e1, e2 = (cx + 8, cy - 9), (cx + 8, cy + 9)
 
         for pos in (e1, e2):
-            # Belo oko
             pygame.draw.circle(self.screen, (255, 255, 255), pos, eye_r)
-            # Zenica (crna)
             pygame.draw.circle(self.screen, (10, 10, 10), pos, eye_r - 2)
 
     def _draw_sidebar(self, game, scores):
