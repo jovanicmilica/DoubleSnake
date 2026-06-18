@@ -16,7 +16,7 @@ from agents.heuristic_agent.heuristic_agent import HeuristicAgent
 
 
 # ── constants ─────────────────────────────────────────────────────────────────
-FPS = 10   # game ticks per second – raise for harder, lower for easier
+FPS = 5   # game ticks per second – raise for harder, lower for easier
 
 KEY_DIR = {
     # WASD
