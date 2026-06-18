@@ -38,9 +38,9 @@ def run():
     """
     Runs a continuous loop of games between two HeuristicAgents, tracking win rates and draws.
     """
-    renderer = Renderer()
+    renderer = Renderer("Agent1", "Agent2")
     
-    scores = {"agent1": 0, "agent2": 0, "draws": 0}
+    scores = {"player1": 0, "player2": 0, "draws": 0}
     games_played = 0
     
     running = True
@@ -53,7 +53,7 @@ def run():
                 if event.key == pygame.K_q:
                     running = False
         
-        if MAX_GAMES is not None and games_played >= MAX_GAMES: # reach the maximum number of games
+        if MAX_GAMES is not None and games_played >= MAX_GAMES:
             running = False
         
         if not running:
@@ -76,7 +76,7 @@ def run():
             
             # render the whole game in real-time
             if RENDER_LIVE:
-                renderer.draw(game, {"player": scores["agent1"], "ai": scores["agent2"]}, fps=FPS)
+                renderer.draw(game, {"player1": scores["player1"], "player2": scores["player2"]}, fps=FPS)
             
             if done:
                 game_over = True
@@ -85,28 +85,28 @@ def run():
         games_played += 1
         state = game.get_state()
         if state == GameState.SNAKE1_WIN:
-            scores["agent1"] += 1
+            scores["player1"] += 1
         elif state == GameState.SNAKE2_WIN:
-            scores["agent2"] += 1
+            scores["player2"] += 1
         elif state == GameState.DRAW:
             scores["draws"] += 1
         
         # render the final state of the game
-        renderer.draw(game, {"player": scores["agent1"], "ai": scores["agent2"]}, fps=FPS)
+        renderer.draw(game, scores, fps=FPS)
         
         # console output 
         if games_played % 100 == 0:
             print(f"Games played: {games_played}")
-            print(f"   Agent1: {scores['agent1']} wins")
-            print(f"   Agent2: {scores['agent2']} wins")
+            print(f"   Agent1: {scores['player1']} wins")
+            print(f"   Agent2: {scores['player2']} wins")
             print(f"   Draws: {scores['draws']}")
-            print(f"   Win rate Agent1: {scores['agent1']/games_played*100:.1f}%")
-            print(f"---")
+            print(f"   Win rate Agent1: {scores['player1']/games_played*100:.1f}%")
+            print("---")
     
     print(f"\n Training completed!")
     print(f"Total games played: {games_played}")
-    print(f"Agent1 wins: {scores['agent1']} ({scores['agent1']/games_played*100:.1f}%)")
-    print(f"Agent2 wins: {scores['agent2']} ({scores['agent2']/games_played*100:.1f}%)")
+    print(f"Agent1 wins: {scores['player1']} ({scores['player1']/games_played*100:.1f}%)")
+    print(f"Agent2 wins: {scores['player2']} ({scores['player2']/games_played*100:.1f}%)")
     print(f"Draws: {scores['draws']} ({scores['draws']/games_played*100:.1f}%)")
     
     renderer.quit()
