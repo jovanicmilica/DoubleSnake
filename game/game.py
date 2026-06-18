@@ -68,7 +68,7 @@ class Game:
         return reward1, reward2, done
 
     def _calculate_rewards(self, dead1, dead2):
-        from config import REWARD_DEATH, REWARD_WIN, REWARD_STEP, REWARD_FOOD
+        from config.config import REWARD_DEATH, REWARD_WIN, REWARD_STEP, REWARD_FOOD
 
         reward1 = REWARD_STEP
         reward2 = REWARD_STEP

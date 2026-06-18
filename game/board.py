@@ -1,5 +1,5 @@
 import random
-from config import BOARD_SIZE
+from config.config import BOARD_SIZE
 
 
 class Board:

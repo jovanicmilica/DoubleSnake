@@ -1,4 +1,4 @@
-import config 
+import config.config as config
 
 class Direction:
     UP = (-1, 0)
@@ -8,7 +8,7 @@ class Direction:
 
 
 class Snake:
-    def init(self, body, direction):
+    def __init__(self, body, direction):
         # body is coordinates list eg. [(3,2), (3,1), (3,0)]
         # head is list[0]
         self.body = list(body)
