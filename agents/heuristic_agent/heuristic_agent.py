@@ -23,10 +23,17 @@ class HeuristicAgent:
 
     def _astar(self):
         start = self.snake.head()
+
+        # board.food may be either a position tuple (r,c) or (position, fruit_type)
         goal = self.board.food
 
         if goal is None:
             return None
+
+        if isinstance(goal, tuple) and len(goal) >= 1 and isinstance(goal[0], tuple):
+            goal_pos = goal[0]
+        else:
+            goal_pos = goal
 
         blocked = set(self.snake.body[1:] + self.other_snake.body)
 
@@ -40,7 +47,7 @@ class HeuristicAgent:
         while heap:
             f, g, current, path = heapq.heappop(heap)
 
-            if current == goal:
+            if current == goal_pos:
                 return path
 
             for direction in DIRECTIONS:
@@ -58,7 +65,7 @@ class HeuristicAgent:
                     continue
 
                 visited[next_pos] = next_g
-                h = self._manhattan(next_pos, goal)
+                h = self._manhattan(next_pos, goal_pos)
                 f_new = next_g + h
                 heapq.heappush(heap, (f_new, next_g, next_pos, path + [direction]))
 
