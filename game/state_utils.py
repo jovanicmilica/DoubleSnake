@@ -1,9 +1,3 @@
-"""
-izvlaenje feature vektora (state representation) za DQN agenta.
-
-
-"""
-
 import numpy as np
 from collections import deque
 from game.snake import Direction
