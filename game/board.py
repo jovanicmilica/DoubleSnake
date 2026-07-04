@@ -7,7 +7,7 @@ class Board:
     def __init__(self):
         self.size = BOARD_SIZE
         self.food = None
-        # available fruit types - prefer assets in assets/fruits/ if present
+        # dostupni tipovi voca
         assets_dir = os.path.normpath(
             os.path.join(os.path.dirname(__file__), '..', 'assets', 'fruits')
         )
@@ -21,10 +21,10 @@ class Board:
             self._fruit_types = ['apple', 'pear', 'blueberry', 'orange', 'grapes']
 
     def place_food(self, snake1_body, snake2_body):
-        # occupied cells by both snakes
+        # celije koje su zauzete od strane zmija
         occupied = set(snake1_body + snake2_body)
         
-        # free cells are those not occupied by either snake
+        # slobodne celije
         free = [
             (r, c)
             for r in range(self.size)
@@ -35,7 +35,6 @@ class Board:
         if free:
             pos = random.choice(free)
             fruit = random.choice(self._fruit_types)
-            # store both position and type
             self.food = (pos, fruit)
         else:
             self.food = None  
@@ -46,7 +45,7 @@ class Board:
 
     def check_collision(self, snake, other_snake):
         '''
-        Returns True if the snake has collided with a wall, itself, or the other snake.
+        Vraca True ako je zmija udarila u zid, samu sebe ili drugu zmiju, inace False.
         '''
         head = snake.head()
 
@@ -64,6 +63,5 @@ class Board:
     def check_food(self, snake):
         if self.food is None:
             return False
-        # food can be stored as (position, type)
         pos = self.food[0] if isinstance(self.food, tuple) and len(self.food) >= 1 else self.food
         return snake.head() == pos

@@ -2,7 +2,7 @@ import pygame
 import os
 from config.config import BOARD_SIZE
 
-# Palette 
+# Paleta boja
 BG          = (15,  15,  20)   
 GRID        = (28,  28,  38)   
 FOOD        = (255, 80,  80) 
@@ -22,14 +22,14 @@ PADDING     = 30
 
 
 def cell_rect(row, col):
-    """Return pygame.Rect for a board cell."""
+    """Vraca pygame.Rect za datu celiju na tabli."""
     x = PADDING + col * (CELL + MARGIN)
     y = PADDING + row * (CELL + MARGIN)
     return pygame.Rect(x, y, CELL, CELL)
 
 
 def board_pixel_size():
-    """Total pixel size of the board area."""
+    """Vraca ukupnu velicinu tabli u pikselima."""
     side = PADDING * 2 + BOARD_SIZE * CELL + (BOARD_SIZE - 1) * MARGIN
     return side
 
@@ -49,13 +49,12 @@ class Renderer:
         self.screen = pygame.display.set_mode((self.W, self.H))
         self.clock  = pygame.time.Clock()
 
-        # fonts
         self.font_xl  = pygame.font.SysFont("monospace", 36, bold=True)
         self.font_lg  = pygame.font.SysFont("consolas", 22, bold=True)
         self.font_md  = pygame.font.SysFont("consolas", 18)
         self.font_sm  = pygame.font.SysFont("consolas", 15)
 
-        # Load fruit images from assets/fruits/ (optional). Filenames will determine fruit types.
+        # ucitavanje slika voca
         self.fruit_images = {}
         assets_dir = os.path.join(os.path.dirname(__file__), '..', 'assets', 'fruits')
         assets_dir = os.path.normpath(assets_dir)
@@ -70,12 +69,11 @@ class Renderer:
                     img = pygame.transform.smoothscale(img, (CELL - 16, CELL - 16))
                     self.fruit_images[name] = img
                 except Exception:
-                    # ignore loading errors and fall back to drawn fruit
                     pass
 
 
     def draw(self, game, scores, fps=10):
-        """Render one frame. Call every game tick."""
+        """Renderuje trenutni status igre na ekran."""
         self.screen.fill(BG)
         self._draw_grid()
         self._draw_food(game.board.food)
@@ -86,14 +84,14 @@ class Renderer:
         self.clock.tick(fps)
 
     def draw_end_screen(self, message, scores):
-        """Semi-transparent overlay with result."""
+        """Poluproziran ekran sa porukom i rezultatima."""
         board_px = board_pixel_size()
 
         surf = pygame.Surface((board_px, board_px), pygame.SRCALPHA)
         surf.fill(OVERLAY_BG)
         self.screen.blit(surf, (0, 0))
 
-        # result text
+        # rezultati i poruka
         title = self.font_xl.render(message, True, TEXT_MAIN)
         self.screen.blit(title, title.get_rect(center=(board_px // 2, board_px // 2 - 40)))
 
@@ -113,8 +111,6 @@ class Renderer:
     def quit(self):
         pygame.quit()
 
-    # private helpers 
-
     def _draw_grid(self):
         for r in range(BOARD_SIZE):
             for c in range(BOARD_SIZE):
@@ -124,7 +120,6 @@ class Renderer:
     def _draw_food(self, food):
         if food is None:
             return
-        # food may be (position, type) or just position
         if isinstance(food, tuple) and len(food) >= 1 and isinstance(food[0], tuple):
             pos, ftype = food[0], (food[1] if len(food) > 1 else 'default')
         else:
@@ -132,7 +127,6 @@ class Renderer:
 
         rect = cell_rect(*pos)
 
-        # simple fruit palette (can be replaced with images later)
         FRUIT_COLORS = {
             'apple': (220, 60,  60),
             'banana': (255, 220, 80),
@@ -143,13 +137,12 @@ class Renderer:
 
         color = FRUIT_COLORS.get(ftype, FOOD)
 
-        # Try to draw an image for the fruit if available, otherwise fallback to ellipse
         img = self.fruit_images.get(ftype)
         if img:
             img_rect = img.get_rect(center=rect.center)
             self.screen.blit(img, img_rect)
         else:
-            # draw fruit body (fallback)
+            # crtanje voca (fallback)
             pygame.draw.ellipse(self.screen, color, rect.inflate(-10, -10))
             pygame.draw.ellipse(self.screen, (255, 200, 200), rect.inflate(-26, -26))
 
@@ -159,14 +152,14 @@ class Renderer:
             color = head_col if i == 0 else body_col
             radius = 10 if i == 0 else 7
             pygame.draw.rect(self.screen, color, rect, border_radius=radius)
-            # eyes on head
+            # oci zmije
             if i == 0:
                 self._draw_eyes(rect, snake.direction)
 
     def _draw_eyes(self, rect, direction):
         dr, dc = direction
         cx, cy = rect.centerx, rect.centery
-        eye_r = 6          # povećano sa 4 na 6
+        eye_r = 6          
 
         if direction == (-1, 0):   # UP
             e1, e2 = (cx - 9, cy - 8), (cx + 9, cy - 8)
@@ -201,11 +194,10 @@ class Renderer:
         label(f"{self.player1} vs {self.player2}", TEXT_DIM)
         gap()
 
-        # divider
         pygame.draw.line(self.screen, GRID, (x, y), (x + SIDEBAR_W - 24, y))
         gap(10)
 
-        # player
+        # player1
         pygame.draw.rect(self.screen, S1_HEAD, pygame.Rect(x, y, 14, 14), border_radius=3)
         self.screen.blit(self.font_md.render(f"  {self.player1}", True, TEXT_MAIN), (x + 18, y - 2))
         y += 22
@@ -213,7 +205,7 @@ class Renderer:
         label(f"  Wins   : {scores['player1']}")
         gap()
 
-        # ai
+        # player2
         pygame.draw.rect(self.screen, S2_HEAD, pygame.Rect(x, y, 14, 14), border_radius=3)
         self.screen.blit(self.font_md.render(f"  {self.player2}", True, TEXT_MAIN), (x + 18, y - 2))
         y += 22

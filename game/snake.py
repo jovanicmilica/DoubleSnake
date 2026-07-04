@@ -9,28 +9,26 @@ class Direction:
 
 class Snake:
     def __init__(self, body, direction):
-        # body is coordinates list eg. [(3,2), (3,1), (3,0)]
-        # head is list[0]
+        # telo je lista koordinata: [(3,2), (3,1), (3,0)]
+        # glava je prvi element liste
         self.body = list(body)
         self.direction = direction
         self.alive = True
-        self.grew = False  # if it should grow this move
+        self.grew = False  # ako je zmija jela hranu u ovom potezu, sledeci potez nece ukloniti rep
 
     def head(self):
         return self.body[0]
 
     def set_direction(self, new_direction):
-        # stopping 180 degree turn (can't move directly back)
+        # ne moze se kretati u suprotnom pravcu
         opposite = (-self.direction[0], -self.direction[1])
         if new_direction != opposite:
             self.direction = new_direction
 
     def move(self):
         '''
-        Move is implemented by adding a new element to the start of the list 
-        That is the new position of the head 
-        If the snake grew in this move we don;t remove the last tail element 
-        If it didn't grow we remove it
+        Metoda koja pomera zmiju u trenutnom pravcu. Ako je zmija jela hranu, sledeci potez nece ukloniti rep.
+        Ako nije jela hranu, uklanja se poslednji element (rep) zmije.
         '''
         head_row, head_col = self.body[0]
         dr, dc = self.direction
@@ -44,7 +42,7 @@ class Snake:
             self.body.pop()  
 
     def grow(self):
-        self.grew = True  # next move() won't remove tail
+        self.grew = True  # sledeci potez ne uklanja rep
 
     def get_body(self):
         return self.body
