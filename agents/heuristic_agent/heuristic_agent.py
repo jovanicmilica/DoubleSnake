@@ -1,18 +1,26 @@
 import heapq
+import random
 from collections import deque
 from game.snake import Direction
-from config.config import BOARD_SIZE
+from config.config import BOARD_SIZE, HEURISTIC_ACTION_RANDOM_PROB
 
 DIRECTIONS = [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]
 
 
 class HeuristicAgent:
-    def __init__(self, snake, other_snake, board):
+    def __init__(self, snake, other_snake, board, random_action_prob=HEURISTIC_ACTION_RANDOM_PROB):
         self.snake = snake
         self.other_snake = other_snake
         self.board = board
+        # sansa da se, umjesto A* poteza, odigra potpuno random potez.
+        # Uvodi raznovrsnost u iskustva koja zavrse u heuristic bufferu
+        # (deterministicki agent bi uvijek posjecivao iste, uske putanje).
+        self.random_action_prob = random_action_prob
 
     def get_action(self):
+        if self.random_action_prob > 0 and random.random() < self.random_action_prob:
+            return random.choice(DIRECTIONS)
+
         path = self._astar()
         if path:
             return path[0]
@@ -24,7 +32,6 @@ class HeuristicAgent:
     def _astar(self):
         start = self.snake.head()
 
-        # board.food may be either a position tuple (r,c) or (position, fruit_type)
         goal = self.board.food
 
         if goal is None:
@@ -37,11 +44,9 @@ class HeuristicAgent:
 
         blocked = set(self.snake.body[1:] + self.other_snake.body)
 
-        # heap element: (f, g, pozicija, put)
         heap = []
         heapq.heappush(heap, (0, 0, start, []))
 
-        # najmanja g vrijednost do svakog posjećenog čvora
         visited = {start: 0}
 
         while heap:
