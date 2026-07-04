@@ -5,7 +5,7 @@ Predtreniranje replay buffera koristeci heuristic vs heuristic igre.
 import numpy as np
 
 from game.game import Game
-from game.state_utils import get_state
+from game.state_utils import STATE_SIZE, get_state
 from agents.heuristic_agent.heuristic_agent import HeuristicAgent
 from agents.rl_agent.replay_buffer import ReplayBuffer
 from agents.rl_agent.snake_env import ACTIONS
@@ -49,7 +49,7 @@ def pretrain_buffer(
             next_obs = (
                 get_state(game.snake1, game.snake2, game.board)
                 if game.snake1.alive
-                else np.zeros(19, dtype=np.float32)
+                else np.zeros(STATE_SIZE, dtype=np.float32)
             )
 
             buffer.push(obs, action, reward1, next_obs, done)

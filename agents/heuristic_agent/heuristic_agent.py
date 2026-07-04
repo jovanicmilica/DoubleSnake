@@ -12,14 +12,13 @@ class HeuristicAgent:
         self.snake = snake
         self.other_snake = other_snake
         self.board = board
-        # sansa da se, umjesto A* poteza, odigra potpuno random potez.
+        # sansa da se, umjesto A* poteza, odigra potpuno slucajan potez.
         # Uvodi raznovrsnost u iskustva koja zavrse u heuristic bufferu
-        # (deterministicki agent bi uvijek posjecivao iste, uske putanje).
         self.random_action_prob = random_action_prob
 
     def get_action(self):
         if self.random_action_prob > 0 and random.random() < self.random_action_prob:
-            return random.choice(DIRECTIONS)
+            return self._random_safe_direction()
 
         path = self._astar()
         if path:
@@ -31,6 +30,7 @@ class HeuristicAgent:
 
     def _astar(self):
         start = self.snake.head()
+        reverse_direction = self._reverse_direction()
 
         goal = self.board.food
 
@@ -56,6 +56,9 @@ class HeuristicAgent:
                 return path
 
             for direction in DIRECTIONS:
+                if current == start and direction == reverse_direction:
+                    continue
+
                 dr, dc = direction
                 r, c = current
                 next_pos = (r + dr, c + dc)
@@ -79,8 +82,12 @@ class HeuristicAgent:
     def _safe_direction(self):
         head = self.snake.head()
         blocked = set(self.snake.body[1:] + self.other_snake.body)
+        reverse_direction = self._reverse_direction()
 
         for direction in DIRECTIONS:
+            if direction == reverse_direction:
+                continue
+
             dr, dc = direction
             r, c = head
             next_pos = (r + dr, c + dc)
@@ -90,3 +97,30 @@ class HeuristicAgent:
                 return direction
 
         return self.snake.direction
+
+    def _random_safe_direction(self):
+        head = self.snake.head()
+        blocked = set(self.snake.body[1:] + self.other_snake.body)
+        reverse_direction = self._reverse_direction()
+        safe_directions = []
+
+        for direction in DIRECTIONS:
+            if direction == reverse_direction:
+                continue
+
+            dr, dc = direction
+            r, c = head
+            next_pos = (r + dr, c + dc)
+
+            if (not self.board.is_out_of_bounds(next_pos) and
+                    next_pos not in blocked):
+                safe_directions.append(direction)
+
+        if safe_directions:
+            return random.choice(safe_directions)
+
+        return self.snake.direction
+
+    def _reverse_direction(self):
+        dr, dc = self.snake.direction
+        return (-dr, -dc)
