@@ -34,10 +34,10 @@ class ReplayBuffer:
         obs, actions, rewards, next_obs, dones = zip(*batch)
 
         return (
-            np.array(obs,      dtype=np.float32),   # (B, 19)
+            np.array(obs,      dtype=np.float32),
             np.array(actions,  dtype=np.int64),      # (B,)
             np.array(rewards,  dtype=np.float32),    # (B,)
-            np.array(next_obs, dtype=np.float32),    # (B, 19)
+            np.array(next_obs, dtype=np.float32),
             np.array(dones,    dtype=np.float32),    # (B,)  float jer mnozimo u loss-u
         )
 

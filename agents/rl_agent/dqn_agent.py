@@ -56,20 +56,35 @@ class DQNAgent:
         (iskoristavanje).
 
         obs[0:4] su danger flagovi (gore, dole, levo, desno) - isti redosled
-        kao akcije. Kod random poteza izbegavamo akcije koje odmah ubijaju
-        zmiju (zid/telo), jer takvi potezi samo skracuju epizodu bez ikakve
-        korisne informacije za trening dok je epsilon jos visok.
+        kao akcije. I random i greedy izbor koriste masku da izbjegnu poteze
+        koji odmah ubijaju zmiju.
         """
+        legal_actions = self._legal_actions(obs)
+
         if random.random() < self.epsilon: # ako je random broj manji od epsilon, biramo random akciju
-            safe_actions = [a for a in range(4) if obs[a] == 0.0]
-            if safe_actions:
-                return random.choice(safe_actions)
+            if legal_actions:
+                return random.choice(legal_actions)
             return random.randint(0, 3)  # nema sigurnog poteza, smrt je neizbezna
 
-        obs_tensor = torch.tensor(obs, dtype=torch.float32).unsqueeze(0)  # pretvaramo u tensor i dodajemo batch dimenziju (1, 19)
+        obs_tensor = torch.tensor(obs, dtype=torch.float32).unsqueeze(0)  # dodajemo batch dimenziju
         with torch.no_grad():
-            q_values = self.model(obs_tensor)  
-        return q_values.argmax(dim=1).item()   # indeks najvece Q-vrednosti
+            q_values = self.model(obs_tensor).squeeze(0)
+            if legal_actions:
+                unsafe_actions = [a for a in range(4) if a not in legal_actions]
+                q_values[unsafe_actions] = -float("inf")
+        return q_values.argmax().item()   # indeks najvece Q-vrednosti
+
+    def _legal_actions(self, obs):
+        illegal_reverse = self._reverse_action(obs)
+        return [
+            action
+            for action in range(4)
+            if obs[action] == 0.0 and action != illegal_reverse
+        ]
+
+    def _reverse_action(self, obs):
+        current_direction = int(np.argmax(obs[4:8]))
+        return {0: 1, 1: 0, 2: 3, 3: 2}[current_direction]
 
 
     def store(self, obs, action, reward, next_obs, done):
@@ -97,10 +112,10 @@ class DQNAgent:
         obs, actions, rewards, next_obs, dones = source.sample(BATCH_SIZE)
 
         # pretvori numpy arraye u PyTorch tensore
-        obs_t      = torch.tensor(obs,     dtype=torch.float32)  # (64, 19)
+        obs_t      = torch.tensor(obs,     dtype=torch.float32)
         actions_t  = torch.tensor(actions, dtype=torch.long)     # (64,)
         rewards_t  = torch.tensor(rewards, dtype=torch.float32)  # (64,)
-        next_obs_t = torch.tensor(next_obs,dtype=torch.float32)  # (64, 19)
+        next_obs_t = torch.tensor(next_obs,dtype=torch.float32)
         dones_t    = torch.tensor(dones,   dtype=torch.float32)  # (64,)
 
         # uzima Q-vrednosti za sve akcije, a zatim odabire one koje odgovaraju odabranim akcijama u batchu
@@ -109,7 +124,18 @@ class DQNAgent:
         # Double DQN: online mreza bira akciju, target mreza evaluira njenu vrednost
         # (smanjuje overestimation bias standardnog DQN-a)
         with torch.no_grad():
-            next_actions = self.model(next_obs_t).argmax(dim=1)
+            next_q_online = self.model(next_obs_t)
+            next_illegal = next_obs_t[:, :4] >= 0.5
+
+            next_current_dirs = next_obs_t[:, 4:8].argmax(dim=1)
+            reverse_map = torch.tensor([1, 0, 3, 2], device=next_obs_t.device)
+            next_reverse_actions = reverse_map[next_current_dirs]
+            next_illegal[torch.arange(next_obs_t.size(0)), next_reverse_actions] = True
+
+            next_q_online = next_q_online.masked_fill(next_illegal, -float("inf"))
+            all_next_actions_unsafe = next_illegal.all(dim=1)
+            next_q_online[all_next_actions_unsafe] = self.model(next_obs_t)[all_next_actions_unsafe]
+            next_actions = next_q_online.argmax(dim=1)
             next_q = self.target_model(next_obs_t).gather(1, next_actions.unsqueeze(1)).squeeze(1)
             target_q = rewards_t + GAMMA * next_q * (1.0 - dones_t)
 
