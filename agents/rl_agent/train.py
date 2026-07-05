@@ -50,7 +50,7 @@ def run(render=None):
             else:
                 print(f"Nastavljam od epizode {start_episode}, epsilon={agent.epsilon:.3f}")
         except RuntimeError as exc:
-            print("Postojeci checkpoint nije kompatibilan sa novim state vektorom; krecem novi trening.")
+            print("Greska pri ucitavanju checkpointa; krecem novi trening.")
             print(f"Detalj: {exc}")
             from agents.rl_agent.pretrain import pretrain_buffer
             agent.set_heuristic_buffer(pretrain_buffer())
@@ -123,7 +123,7 @@ def run(render=None):
             avg_food = sum(recent_agent_food) / len(recent_agent_food)
             avg_opp_food = sum(recent_opponent_food) / len(recent_opponent_food)
             wr    = scores["player1"] / games * 100
-            print(
+            log_line = (
                 f"Ep {games:5d} | "
                 f"avg reward (100): {avg:7.1f} | "
                 f"food: {avg_food:.2f}/{avg_opp_food:.2f} | "
@@ -133,6 +133,10 @@ def run(render=None):
                 f"buffer: {len(agent.buffer)} | "
                 f"heuristic_p: {agent.heuristic_sample_prob:.3f}"
             )
+            print(log_line)
+            with open("training_log.txt", "a", encoding="utf-8") as f:
+                f.write(log_line + "\n")
+
 
         # checkpoint
         if (episode + 1) % CHECKPOINT_FREQ == 0:
